@@ -18,4 +18,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "net-ping", "~> 2.0"
   spec.add_dependency "curses", "~> 1.2"
+
+  spec.add_development_dependency "rspec", "~> 3.10"
 end

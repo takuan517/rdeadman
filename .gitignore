@@ -1,0 +1,61 @@
+# Bundler dependency folder
+/vendor/bundle
+
+# Ignore all .log, .tmp, and .pid files in the log and tmp directories
+/log/*.log
+/tmp/*.tmp
+/tmp/*.pid
+
+# Ignore all gem files and generated documentation
+*.gem
+doc/
+
+# Ignore any coverage reports
+/coverage/
+
+# Ignore Mac OS X system files
+.DS_Store
+
+# Ignore Byebug command history file.
+.byebug_history
+
+# Ignore RuboCop static code analysis config file
+.rubocop.yml
+
+# Ignore the built gem files
+/pkg
+
+# Ignore the Gemfile.lock file
+Gemfile.lock
+
+# Ignore spec examples status
+/spec/examples.txt
+
+# Ignore bundler config
+/.bundle
+
+# Ignore dotenv environment files
+.env
+.env.*.local
+
+# Ignore editor and IDE specific files
+.idea/
+/.vscode/
+/*.swp
+
+# Ignore Yard documentation
+.yardoc
+
+# Ignore Rake compilation
+.rake_tasks~
+
+# Ignore Node.js modules
+/node_modules
+
+# Ignore any local temporary files
+*.local
+*.bak
+*.old
+
+# Ignore gemspec file backup
+*.gemspec.bak
