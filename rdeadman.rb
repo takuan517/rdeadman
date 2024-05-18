@@ -22,7 +22,6 @@ class HostMonitor
 
   def monitor
     pinger = Net::Ping::External.new(@host)
-
     loop do
       @sent_packets += 1
       if pinger.ping
@@ -32,7 +31,6 @@ class HostMonitor
         @lost_packets += 1
         @results << "X"
       end
-
       yield self if block_given?
       sleep @interval
     end
@@ -55,7 +53,7 @@ end
 class Display
   def initialize
     Curses.init_screen
-    Curses.curs_set(0)
+    Curses.curs_set(0) # Invisible cursor
     Curses.start_color
     Curses.use_default_colors
     Curses.init_pair(1, Curses::COLOR_GREEN, -1)
@@ -66,35 +64,35 @@ class Display
     Curses.close_screen
   end
 
-  def draw(host_monitor)
+  def draw(host_monitors)
     Curses.clear
-    draw_title(host_monitor)
+    draw_title
     draw_reference
-    draw_host_status(host_monitor)
+    host_monitors.each_with_index { |host_monitor, index| draw_host_status(host_monitor, index + 4) }
     Curses.refresh
   end
 
-  def draw_title(host_monitor)
+  def draw_title
     Curses.setpos(0, 0)
-    Curses.addstr(" From: #{Socket.gethostname} (#{host_monitor.address}) [ver 22.02.10]")
+    Curses.addstr(" From: #{Socket.gethostname} [ver 22.02.10]")
     Curses.setpos(1, 0)
     Curses.addstr("   RTT Scale 10ms. Keys: (r)efresh")
   end
 
   def draw_reference
     Curses.setpos(3, 0)
-    Curses.addstr(" HOSTNAME  ADDRESS             LOSS  RTT  AVG  SNT  RESULT")
+    Curses.addstr(" HOSTNAME           ADDRESS             LOSS   RTT   AVG   SNT  RESULT")
   end
 
-  def draw_host_status(host_monitor)
-    Curses.setpos(4, 0)
+  def draw_host_status(host_monitor, line)
+    Curses.setpos(line, 0)
     status = [
-      host_monitor.host.ljust(8),
-      host_monitor.address.ljust(15),
-      "#{host_monitor.loss_rate}%",
-      "#{host_monitor.results.last}",
-      "#{host_monitor.avg_rtt}",
-      "#{host_monitor.sent_packets}",
+      host_monitor.host.ljust(16),
+      host_monitor.address.ljust(17),
+      "#{host_monitor.loss_rate}%".rjust(5),
+      "#{host_monitor.results.last}".rjust(5),
+      "#{host_monitor.avg_rtt}".rjust(5),
+      "#{host_monitor.sent_packets}".rjust(5),
       "#{host_monitor.result_graph}"
     ].join("  ")
 
@@ -102,21 +100,38 @@ class Display
   end
 end
 
+def load_hosts_from_config(file)
+  hosts = []
+  File.readlines(file).each do |line|
+    line = line.strip
+    next if line.empty? || line.start_with?("#")
+    hosts << line
+  end
+  hosts
+end
+
 if ARGV.length < 1
-  puts "Usage: ruby monitor_host.rb <host> [interval]"
+  puts "Usage: ruby monitor_hosts.rb <config_file> [interval]"
   exit
 end
 
-host = ARGV[0]
+config_file = ARGV[0]
 interval = ARGV[1] ? ARGV[1].to_i : 5
 
-monitor = HostMonitor.new(host, interval)
+hosts = load_hosts_from_config(config_file)
+host_monitors = hosts.map { |host| HostMonitor.new(host, interval) }
 display = Display.new
 
 begin
-  monitor.monitor do |host_monitor|
-    display.draw(host_monitor)
+  threads = host_monitors.map do |monitor|
+    Thread.new { monitor.monitor }
+  end
+
+  loop do
+    display.draw(host_monitors)
+    sleep interval
   end
 ensure
   display.close
+  threads.each(&:kill)
 end
