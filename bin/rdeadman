@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+require "rdeadman/monitor"
+
+if ARGV.length < 1
+  puts "Usage: rdeadman <config_file> [interval]"
+  exit
+end
+
+config_file = ARGV[0]
+interval = ARGV[1] ? ARGV[1].to_i : 5
+
+Rdeadman::MonitorHosts.run(config_file, interval)
